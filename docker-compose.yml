@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  face_recognition:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - SECRET_KEY=gungadhisanjaya
+      - DB_HOST=db_face_recognition
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=face_recognition
+    depends_on:
+      - db_face_recognition
+    command: >
+      sh -c "
+      echo 'Waiting for MySQL to be ready';
+      while ! nc -z db_face_recognition 3306; do sleep 1; done;
+      echo 'MySQL ready';
+      python app/run.py"
+    volumes:
+      - .:/app
+
+  db_face_recognition:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: face_recognition
+    ports:
+      - "3306:3306"
