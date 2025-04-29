@@ -5,6 +5,6 @@ class FaceReference(db.Model):
     __tablename__ = 'face_references'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    image = db.Column(db.LargeBinary, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)  # Tidak pakai foreign key
+    image_path = db.Column(db.String(255), nullable=False)  # simpan path ke file, bukan isi file
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
