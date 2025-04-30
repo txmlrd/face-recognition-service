@@ -1,4 +1,4 @@
-from extensions import DeepFace
+from deepface import DeepFace
 
 def verify_images(img1, img2):
     try:
@@ -10,7 +10,7 @@ def verify_images(img1, img2):
             detector_backend='retinaface',
             distance_metric='euclidean_l2'
         )
-        filtered = {
+        return {
             "detector_backend": result.get("detector_backend"),
             "distance": result.get("distance"),
             "model": result.get("model"),
@@ -19,7 +19,5 @@ def verify_images(img1, img2):
             "time": result.get("time"),
             "verified": result.get("verified")
         }
-
-        return filtered
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "verified": False}
