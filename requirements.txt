@@ -1,5 +1,6 @@
 Flask
 Flask-SQLAlchemy
+Flask-Bcrypt
 python-dotenv
 PyMySQL
 Werkzeug
@@ -7,3 +8,4 @@ deepface
 Pillow
 tensorflow==2.12.0
 cryptography
+Flask-JWT-Extended

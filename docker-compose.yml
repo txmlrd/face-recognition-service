@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  face_recognition:
+  face-recognition:
     build: .
     ports:
       - "5000:5000"
@@ -21,6 +21,8 @@ services:
       python app/run.py"
     volumes:
       - .:/app
+    networks:
+      - microservice-net
 
   db_face_recognition:
     image: mysql:8.0
@@ -30,3 +32,9 @@ services:
       MYSQL_DATABASE: face_recognition
     ports:
       - "3306:3306"
+    networks:
+      - microservice-net
+
+networks:
+  microservice-net:
+    external: true

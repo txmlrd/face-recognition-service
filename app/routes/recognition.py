@@ -1,5 +1,4 @@
 from extensions import os, request, jsonify, Blueprint, DeepFace
-from utils.base64 import base64_to_image  # Jika dipakai di modul lain
 from utils.verify_image import verify_images
 import os
 
