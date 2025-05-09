@@ -7,6 +7,7 @@ import base64
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 
 DeepFace = DeepFace
 jwt = JWTManager()
@@ -20,3 +21,4 @@ request = request
 jsonify = jsonify
 base64 = base64
 Blueprint = Blueprint
+migrate = Migrate()

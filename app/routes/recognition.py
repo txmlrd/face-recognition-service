@@ -1,5 +1,6 @@
-from extensions import os, request, jsonify, Blueprint, DeepFace
-from utils.verify_image import verify_images
+from app.extensions import os, request, jsonify, Blueprint, DeepFace
+from app.utils.verify_image import verify_images
+from app.models.face_reference import FaceReference
 import os
 
 recognition_bp = Blueprint('recognition', __name__)
@@ -16,13 +17,16 @@ def verify_route():
     # Simpan gambar upload sementara
     img_upload_path = "temp_upload.jpg"
     img_upload.save(img_upload_path)
-
-    # Ambil 3 foto referensi dari storage
-    reference_images = []
-    for i in range(1, 4):
-        ref_img_path = f"storage/faces/{user_id}/img_{i}.jpg"
-        if os.path.exists(ref_img_path):
-            reference_images.append(ref_img_path)
+    
+    user = FaceReference.query.filter_by(user_id=user_id).first()
+    if user :
+        images_path = user.image_path
+        # Ambil 3 foto referensi dari storage
+        reference_images = []
+        for i in range(1, 4):
+            ref_img_path = f"{images_path}/img_{i}.jpg"
+            if os.path.exists(ref_img_path):
+                reference_images.append(ref_img_path)
 
     if len(reference_images) == 0:
         os.remove(img_upload_path)

@@ -1,8 +1,9 @@
 import os
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-# from models.user import User
-from extensions import bcrypt
+from app.models.face_reference import FaceReference
+from datetime import datetime
+from app.extensions import db
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -17,6 +18,11 @@ def upload_faces():
 
     try:
         save_path = os.path.join("storage", "faces", str(user_id))
+        
+        new_face_references = FaceReference(user_id=user_id, image_path=save_path, created_at=datetime.utcnow())
+        # Simpan ke database
+        db.session.add(new_face_references)
+        db.session.commit()
         os.makedirs(save_path, exist_ok=True)
 
         for i, image in enumerate(images, start=1):

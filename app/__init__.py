@@ -1,8 +1,8 @@
-from extensions import DeepFace, os, BytesIO, Image, Flask, request, jsonify, db
-from routes.recognition import recognition_bp
-from routes.auth import auth_bp
-from config import Config
-from models.face_reference import FaceReference  # Pastikan model di-import
+from app.extensions import  Flask, db, migrate
+from app.routes.recognition import recognition_bp
+from app.routes.auth import auth_bp
+from app.config import Config
+from app.models.face_reference import FaceReference  # Pastikan model di-import
 
 def create_app():
     app = Flask(__name__)
@@ -10,6 +10,7 @@ def create_app():
 
     # jwt(app)
     db.init_app(app)
+    migrate.init_app(app, db)  # Inisialisasi Flask-Migrate dengan app dan db
     
     # Membuat tabel jika belum ada
     with app.app_context():
