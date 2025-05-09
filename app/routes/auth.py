@@ -12,7 +12,6 @@ import requests
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/upload-face', methods=['POST'])
-@jwt_required()
 def upload_faces():
     user_id = request.form.get('user_id')
     images = request.files.getlist('images')  # Ambil semua file dengan key 'images'
