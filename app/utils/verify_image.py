@@ -1,7 +1,11 @@
 from deepface import DeepFace
+import os
 
 def verify_images(img1, img2):
     try:
+        # print("[DEBUG] img1:", img1, "| exists:", os.path.exists(img1))
+        # print("[DEBUG] img2:", img2, "| exists:", os.path.exists(img2))
+
         result = DeepFace.verify(
             img1_path=img1,
             img2_path=img2,
@@ -20,4 +24,6 @@ def verify_images(img1, img2):
             "verified": result.get("verified")
         }
     except Exception as e:
+        # print("[ERROR]", str(e))
         return {"error": str(e), "verified": False}
+

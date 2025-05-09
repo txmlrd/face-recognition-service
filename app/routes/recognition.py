@@ -1,56 +1,17 @@
 from app.extensions import os, request, jsonify, Blueprint, DeepFace
 from app.utils.verify_image import verify_images
 from app.models.face_reference import FaceReference
-import os
+from app.function.face_verification_logic import verify_face_logic
 
 recognition_bp = Blueprint('recognition', __name__)
 
 @recognition_bp.route('/verify', methods=['POST'])
-def verify_route():
-    # Ambil data dari form
+def verifyface():
     img_upload = request.files.get("image")
     user_id = request.form.get("user_id")
 
     if not img_upload or not user_id:
         return jsonify({"error": "image and user_id are required"}), 400
 
-    # Simpan gambar upload sementara
-    img_upload_path = "temp_upload.jpg"
-    img_upload.save(img_upload_path)
-    
-    user = FaceReference.query.filter_by(user_id=user_id).first()
-    if user :
-        images_path = user.image_path
-        # Ambil 3 foto referensi dari storage
-        reference_images = []
-        for i in range(1, 4):
-            ref_img_path = f"{images_path}/img_{i}.jpg"
-            if os.path.exists(ref_img_path):
-                reference_images.append(ref_img_path)
-
-    if len(reference_images) == 0:
-        os.remove(img_upload_path)
-        return jsonify({"error": "No reference images found for this user"}), 400
-
-    # Bandingkan satu per satu
-    for ref_img_path in reference_images:
-        result = verify_images(ref_img_path, img_upload_path)
-
-        print(f"[DEBUG] Comparing with: {ref_img_path}")
-        print(f"[DEBUG] Distance: {result.get('distance')} | Threshold: {result.get('threshold')} | Verified: {result.get('verified')}")
-
-        if result.get("verified") is True:
-            os.remove(img_upload_path)
-            return jsonify({
-                "message": "Match found",
-                "reference_image": ref_img_path,
-                "match": True,
-                "detail": result  # Bisa dihapus kalau gak mau tampilkan detail
-            })
-
-    # Kalau tidak ada yang cocok
-    os.remove(img_upload_path)
-    return jsonify({
-        "message": "No match found in any reference images",
-        "match": False
-    }), 404
+    result, status_code = verify_face_logic(user_id, img_upload)
+    return jsonify(result), status_code
