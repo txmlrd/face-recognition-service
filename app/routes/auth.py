@@ -7,6 +7,7 @@ from app.extensions import db, create_access_token, get_jwt_identity, jwt_requir
 from app.function.face_verification_logic import verify_face_logic
 from extensions import bcrypt
 import requests
+from app.config import Config
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -41,7 +42,7 @@ def login():
     data = request.form
     email, password = data.get('email'), data.get('password')
 
-    user_service_url = f"http://user-service:5001/internal/user-by-email?email={email}"  # sesuaikan URL dan port
+    user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-email?email={email}"  # sesuaikan URL dan port
     user_response = requests.get(user_service_url)
     
     if user_response.status_code != 200:
@@ -76,23 +77,46 @@ def login_face():
     data = request.form
     email = data.get('email')
     face = request.files.get('face_image')
-    
+    selected_face_model = data.get('face_model_preference')
+
     if not email or not face:
         return jsonify({"error": "Email and face image are required"}), 400
 
-    # Cari user berdasarkan username atau email
-    user_service_url = f"http://user-service:5001/internal/user-by-email?email={email}"  # sesuaikan URL dan port
+    # Ambil user berdasarkan email
+    user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-email?email={email}"
     user_response = requests.get(user_service_url)
 
-    user = user_response.json()
     if user_response.status_code != 200:
         return jsonify({"error": "User not found"}), 404
+
+    user = user_response.json()
     user_id = user['id']
-    
-    result, status_code = verify_face_logic(user_id, face)
+    user_model_preference = user.get('face_model_preference')
+
+    result, status_code = verify_face_logic(user_id, face, selected_face_model)
 
     if result.get('match'):
-        return jsonify(access_token=create_access_token(identity=str(user_id))), 200
+        access_token = create_access_token(identity=str(user_id))
+
+        if selected_face_model != user_model_preference:
+            update_model_url = f"{Config.USER_SERVICE_URL}/update/face-model-preference"
+            update_model_response = requests.post(
+                update_model_url,
+                data={"user_id": user_id, "face_model_preference": selected_face_model},
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            
+            result_model = update_model_response.json()
+            if update_model_response.status_code != 200:
+                return jsonify(result_model), 500
+
+        response = {
+        "access_token": access_token,
+        "verification_result": result  # Menambahkan hasil verifikasi gambar
+    }
+        return jsonify(response), 200
+
     return jsonify({"error": "Face recognition failed", "details": result}), status_code
+
 
 

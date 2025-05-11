@@ -21,4 +21,8 @@ class Config:
     
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
     JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get('JWT_ACCESS_TOKEN_EXPIRES'))  
-    JWT_REFRESH_TOKEN_EXPIRES = int(os.environ.get('JWT_REFRESH_TOKEN_EXPIRES'))  
+    JWT_REFRESH_TOKEN_EXPIRES = int(os.environ.get('JWT_REFRESH_TOKEN_EXPIRES'))
+    
+    USER_SERVICE_URL = os.environ.get('USER_SERVICE_URL')
+    AUTH_SERVICE_URL = os.environ.get('AUTH_SERVICE_URL') 
+    API_GATEWAY_URL = os.environ.get('API_GATEWAY_URL')

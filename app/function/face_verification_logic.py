@@ -1,9 +1,15 @@
 # face_verification_logic.py
 import os
 from app.models.face_reference import FaceReference
-from app.utils.verify_image import verify_images # asumsi ini fungsi pembanding wajah
+from app.utils.verify_image import FaceVerifier
+import logging
 
-def verify_face_logic(user_id, uploaded_image_file):
+
+def verify_face_logic(user_id, uploaded_image_file, model):
+    try: model = int(model)
+    except ValueError:
+        return {"error": "Invalid model selected"}, 400
+
     img_upload_path = "temp_upload.jpg"
     uploaded_image_file.save(img_upload_path)
 
@@ -24,7 +30,14 @@ def verify_face_logic(user_id, uploaded_image_file):
         return {"error": "No reference images found"}, 400
 
     for ref_img_path in reference_images:
-        result = verify_images(ref_img_path, img_upload_path)
+        
+        if model == 1:
+            result = FaceVerifier.verify_paper(ref_img_path, img_upload_path)
+        elif model == 2:
+            result = FaceVerifier.verify_default(ref_img_path, img_upload_path)
+        else:
+            return {"error": "Invalid model selected"}, 400  # Pastikan model yang valid
+
 
         if result.get("verified") is True:
             os.remove(img_upload_path)

@@ -1,5 +1,4 @@
 from app.extensions import os, request, jsonify, Blueprint, DeepFace
-from app.utils.verify_image import verify_images
 from app.models.face_reference import FaceReference
 from app.function.face_verification_logic import verify_face_logic
 
