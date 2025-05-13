@@ -8,6 +8,7 @@ from app.function.face_verification_logic import verify_face_logic
 from extensions import bcrypt
 import requests
 from app.config import Config
+from datetime import timedelta
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -42,23 +43,45 @@ def login():
     data = request.form
     email, password = data.get('email'), data.get('password')
 
-    user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-email?email={email}"  # sesuaikan URL dan port
+    # 1. Ambil user dari user-service
+    user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-email?email={email}"
     user_response = requests.get(user_service_url)
-    
+
     if user_response.status_code != 200:
         return jsonify({"error": "User not found"}), 404
-    
+
     user = user_response.json()
     password_user = user.get('password')
     is_verified = user.get('is_verified')
     user_id = user.get('id')
+    role_id = user.get('role_id')
 
-    if user and bcrypt.check_password_hash(password_user, password):
-        if not is_verified:
-            return jsonify({"error": "Email not verified"}), 401
-        access_token = create_access_token(identity=str(user_id))
-        return jsonify(access_token=access_token), 200
-    return jsonify({"error": "Invalid credentials"}), 401
+    if not bcrypt.check_password_hash(password_user, password):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    if not is_verified:
+        return jsonify({"error": "Email not verified"}), 401
+
+    # 2. Ambil permissions dari role-management-service
+    role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
+    role_response = requests.get(role_service_url)
+
+    if role_response.status_code != 200:
+        return jsonify({"error": "Failed to fetch permissions"}), 500
+
+    permissions = role_response.json().get("permissions", [])
+
+    # 3. Tambahkan custom claims ke JWT
+    additional_claims = {
+        "permissions": permissions
+    }
+
+    access_token = create_access_token(
+    identity=str(user_id),
+    additional_claims=additional_claims
+)
+
+    return jsonify(access_token=access_token), 200
     
     
 # Logout

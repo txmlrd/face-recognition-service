@@ -26,3 +26,4 @@ class Config:
     USER_SERVICE_URL = os.environ.get('USER_SERVICE_URL')
     AUTH_SERVICE_URL = os.environ.get('AUTH_SERVICE_URL') 
     API_GATEWAY_URL = os.environ.get('API_GATEWAY_URL')
+    ROLE_SERVICE_URL = os.environ.get('ROLE_SERVICE_URL')
