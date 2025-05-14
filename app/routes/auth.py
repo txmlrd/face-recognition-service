@@ -14,16 +14,16 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/upload-face', methods=['POST'])
 def upload_faces():
-    user_id = request.form.get('user_id')
+    uuid = request.form.get('uuid')
     images = request.files.getlist('images')  # Ambil semua file dengan key 'images'
 
-    if not user_id or len(images) != 3:
+    if not uuid or len(images) != 3:
         return jsonify({'message': 'user_id dan 3 image files wajib dikirim'}), 400
 
     try:
-        save_path = os.path.join("storage", "faces", str(user_id))
+        save_path = os.path.join("storage", "faces", str(uuid))
         
-        new_face_references = FaceReference(user_id=user_id, image_path=save_path, created_at=datetime.utcnow())
+        new_face_references = FaceReference(uuid=uuid, image_path=save_path, created_at=datetime.utcnow())
         # Simpan ke database
         db.session.add(new_face_references)
         db.session.commit()
@@ -113,10 +113,11 @@ def login_face():
 
     user = user_response.json()
     user_id = user['id']
+    uuid = user['uuid']
     role_id = user['role_id']
     user_model_preference = user.get('face_model_preference')
 
-    result, status_code = verify_face_logic(user_id, face, selected_face_model)
+    result, status_code = verify_face_logic(uuid, face, selected_face_model)
 
     if result.get('match'):
         role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"

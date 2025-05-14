@@ -5,7 +5,7 @@ from app.utils.verify_image import FaceVerifier
 import logging
 
 
-def verify_face_logic(user_id, uploaded_image_file, model):
+def verify_face_logic(uuid, uploaded_image_file, model):
     try: model = int(model)
     except ValueError:
         return {"error": "Invalid model selected"}, 400
@@ -13,7 +13,7 @@ def verify_face_logic(user_id, uploaded_image_file, model):
     img_upload_path = "temp_upload.jpg"
     uploaded_image_file.save(img_upload_path)
 
-    user = FaceReference.query.filter_by(user_id=user_id).first()
+    user = FaceReference.query.filter_by(uuid=uuid).first()
     if not user:
         os.remove(img_upload_path)
         return {"error": "User not found"}, 404
