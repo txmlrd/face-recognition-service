@@ -10,3 +10,4 @@ tensorflow==2.12.0
 cryptography
 Flask-JWT-Extended
 flask_migrate
+redis

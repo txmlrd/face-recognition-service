@@ -3,9 +3,8 @@ from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from app.models.face_reference import FaceReference
 from datetime import datetime
-from app.extensions import db, create_access_token, get_jwt_identity, jwt_required
+from app.extensions import db, create_access_token, get_jwt_identity, jwt_required, bcrypt
 from app.function.face_verification_logic import verify_face_logic
-from extensions import bcrypt
 import requests
 from app.config import Config
 from datetime import timedelta
@@ -40,7 +39,7 @@ def upload_faces():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    data = request.form
+    data = request.get_json()
     email, password = data.get('email'), data.get('password')
 
     # 1. Ambil user dari user-service
@@ -66,8 +65,8 @@ def login():
     role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
     role_response = requests.get(role_service_url)
 
-    if role_response.status_code != 200:
-        return jsonify({"error": "Failed to fetch permissions"}), 500
+    # if role_response.status_code != 200:
+    #     return jsonify({"error": "Failed to fetch permissions"}), 500
 
     permissions = role_response.json().get("permissions", [])
 
@@ -114,12 +113,29 @@ def login_face():
 
     user = user_response.json()
     user_id = user['id']
+    role_id = user['role_id']
     user_model_preference = user.get('face_model_preference')
 
     result, status_code = verify_face_logic(user_id, face, selected_face_model)
 
     if result.get('match'):
-        access_token = create_access_token(identity=str(user_id))
+        role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
+        role_response = requests.get(role_service_url)
+
+        # if role_response.status_code != 200:
+        #     return jsonify({"error": "Failed to fetch permissions"}), 500
+
+        permissions = role_response.json().get("permissions", [])
+
+    # 3. Tambahkan custom claims ke JWT
+        additional_claims = {
+        "permissions": permissions
+     }
+
+        access_token = create_access_token(
+        identity=str(user_id),
+        additional_claims=additional_claims
+        )
 
         if selected_face_model != user_model_preference:
             update_model_url = f"{Config.USER_SERVICE_URL}/update/face-model-preference"
