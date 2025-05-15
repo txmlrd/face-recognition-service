@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, Blueprint
 import base64
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required, create_refresh_token
 from flask_migrate import Migrate
 import redis
 from app.config import Config
@@ -29,3 +29,4 @@ migrate = Migrate()
 create_access_token = create_access_token
 get_jwt_identity = get_jwt_identity
 jwt_required = jwt_required
+create_refresh_token = create_refresh_token

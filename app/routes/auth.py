@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from app.models.face_reference import FaceReference
 from datetime import datetime
-from app.extensions import db, create_access_token, get_jwt_identity, jwt_required, bcrypt
+from app.extensions import db, create_access_token, get_jwt_identity, jwt_required, bcrypt, create_refresh_token
 from app.function.face_verification_logic import verify_face_logic
 import requests
 from app.config import Config
@@ -11,6 +11,20 @@ from datetime import timedelta
 
 
 auth_bp = Blueprint('auth', __name__)
+
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    try:
+        current_user_id = get_jwt_identity() 
+        new_access_token = create_access_token(
+            identity=current_user_id,
+        )
+        return jsonify({
+            "access_token": new_access_token
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to refresh token", "details": str(e)}), 500
 
 @auth_bp.route('/upload-face', methods=['POST'])
 def upload_faces():
@@ -79,8 +93,12 @@ def login():
     identity=str(user_id),
     additional_claims=additional_claims
 )
+    response = {
+        "access_token": access_token,
+        "refresh_token": create_refresh_token(identity=str(user_id)),
+    }
 
-    return jsonify(access_token=access_token), 200
+    return jsonify(response), 200
     
     
 # Logout
@@ -152,7 +170,8 @@ def login_face():
 
         response = {
         "access_token": access_token,
-        "verification_result": result  # Menambahkan hasil verifikasi gambar
+        "verification_result": result,
+        "refresh_token": create_refresh_token(identity=str(user_id))
     }
         return jsonify(response), 200
 
