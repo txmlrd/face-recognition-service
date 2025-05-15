@@ -38,9 +38,10 @@ def crucial_verify():
 
     user = user_response.json()
     user_model_preference = user.get("face_model_preference")
+    uuid = user['uuid']
 
     # Jalankan verifikasi wajah dengan model yang dipilih user
-    result, status_code = verify_face_logic(user_id_token, img_upload, selected_face_model)
+    result, status_code = verify_face_logic(uuid, img_upload, selected_face_model)
 
     if result.get("match"):
         # Update face model jika berbeda
