@@ -17,12 +17,32 @@ auth_bp = Blueprint('auth', __name__)
 def refresh():
     try:
         current_user_id = get_jwt_identity() 
+        user_id = current_user_id
+        user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-id?id={user_id}"
+        user_response = requests.get(user_service_url)
+
+        if user_response.status_code != 200:
+            return jsonify({"error": "User not found"}), 404
+        
+        
+        role_id = user_response.json().get('role_id')
+        
+        role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
+        role_response = requests.get(role_service_url)
+        
+        if role_response.status_code != 200:
+            return jsonify({"error": "Failed to fetch permissions"}), 500
+
+        permissions = role_response.json().get("permissions", [])
+
+        additional_claims = {
+        "permissions": permissions
+        }
         new_access_token = create_access_token(
             identity=current_user_id,
+            additional_claims=additional_claims
         )
-        return jsonify({
-            "access_token": new_access_token
-        }), 200
+        return jsonify(access_token=new_access_token), 200
     except Exception as e:
         return jsonify({"error": "Failed to refresh token", "details": str(e)}), 500
 
