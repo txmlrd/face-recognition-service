@@ -88,6 +88,7 @@ def login():
     is_verified = user.get('is_verified')
     user_id = user.get('id')
     role_id = user.get('role_id')
+    uuid = user.get('uuid')
 
     if not bcrypt.check_password_hash(password_user, password):
         return jsonify({"error": "Invalid credentials"}), 401
@@ -106,7 +107,8 @@ def login():
 
     # 3. Tambahkan custom claims ke JWT
     additional_claims = {
-        "permissions": permissions
+        "permissions": permissions,
+        "uuid": uuid
     }
 
     access_token = create_access_token(
@@ -168,7 +170,8 @@ def login_face():
 
     # 3. Tambahkan custom claims ke JWT
         additional_claims = {
-        "permissions": permissions
+        "permissions": permissions,
+        "uuid": uuid
      }
 
         access_token = create_access_token(
