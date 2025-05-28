@@ -156,7 +156,11 @@ def login_face():
     user_id = user['id']
     uuid = user['uuid']
     role_id = user['role_id']
+    is_verified = user.get('is_verified')
     user_model_preference = user.get('face_model_preference')
+    
+    if not is_verified:
+        return jsonify({"error": "Email not verified"}), 401
 
     result, status_code = verify_face_logic(uuid, face, selected_face_model)
 
