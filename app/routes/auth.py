@@ -108,7 +108,8 @@ def login():
     # 3. Tambahkan custom claims ke JWT
     additional_claims = {
         "permissions": permissions,
-        "uuid": uuid
+        "uuid": uuid,
+        "role_id": role_id,
     }
 
     access_token = create_access_token(
@@ -171,7 +172,8 @@ def login_face():
     # 3. Tambahkan custom claims ke JWT
         additional_claims = {
         "permissions": permissions,
-        "uuid": uuid
+        "uuid": uuid,
+        "role_id": role_id,
      }
 
         access_token = create_access_token(
