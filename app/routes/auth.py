@@ -26,6 +26,7 @@ def refresh():
         
         
         role_id = user_response.json().get('role_id')
+        uuid = user_response.json().get('uuid')
         
         role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
         role_response = requests.get(role_service_url)
@@ -36,7 +37,9 @@ def refresh():
         permissions = role_response.json().get("permissions", [])
 
         additional_claims = {
-        "permissions": permissions
+        "permissions": permissions,
+        "uuid": uuid,
+        "role_id": role_id,
         }
         new_access_token = create_access_token(
             identity=current_user_id,
