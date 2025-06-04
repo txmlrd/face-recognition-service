@@ -28,16 +28,16 @@ def refresh():
         role_id = user_response.json().get('role_id')
         uuid = user_response.json().get('uuid')
         
-        role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
+        role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/role-name-by-role-id?role_id={role_id}"
         role_response = requests.get(role_service_url)
         
         if role_response.status_code != 200:
             return jsonify({"error": "Failed to fetch permissions"}), 500
 
-        permissions = role_response.json().get("permissions", [])
+        role_name = role_response.json().get("role_name")
 
         additional_claims = {
-        "permissions": permissions,
+        "role_name": role_name,
         "uuid": uuid,
         "role_id": role_id,
         }
@@ -100,17 +100,17 @@ def login():
         return jsonify({"error": "Email not verified"}), 401
 
     # 2. Ambil permissions dari role-management-service
-    role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
+    role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/role-name-by-role-id?role_id={role_id}"
     role_response = requests.get(role_service_url)
 
     # if role_response.status_code != 200:
     #     return jsonify({"error": "Failed to fetch permissions"}), 500
 
-    permissions = role_response.json().get("permissions", [])
+    role_name = role_response.json().get("role_name")
 
     # 3. Tambahkan custom claims ke JWT
     additional_claims = {
-        "permissions": permissions,
+        "role_name": role_name,
         "uuid": uuid,
         "role_id": role_id,
     }
@@ -168,17 +168,17 @@ def login_face():
     result, status_code = verify_face_logic(uuid, face, selected_face_model)
 
     if result.get('match'):
-        role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/permissions-by-role/{role_id}"
+        role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/role-name-by-role-id?role_id={role_id}"
         role_response = requests.get(role_service_url)
 
         # if role_response.status_code != 200:
         #     return jsonify({"error": "Failed to fetch permissions"}), 500
 
-        permissions = role_response.json().get("permissions", [])
+        role_name = role_response.json().get("role_name")
 
     # 3. Tambahkan custom claims ke JWT
         additional_claims = {
-        "permissions": permissions,
+        "role_name": role_name,
         "uuid": uuid,
         "role_id": role_id,
      }
