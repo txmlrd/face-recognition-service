@@ -48,7 +48,7 @@ def inject_crucial_token():
 
         return jsonify({
             "status": "success",
-            "message": f"Crucial token for user {user_id} injected successfully",
+            "message": f"Crucial token injected successfully",
             "data": {
                 "user_id": user_id,
                 "key": key,
@@ -85,7 +85,7 @@ def delete_crucial_token():
         if result == 1:
             return jsonify({
                 "status": "success",
-                "message": f"Crucial token for user {user_id} deleted successfully",
+                "message": f"Crucial token for deleted successfully",
                 "data": {
                     "user_id": user_id,
                     "key": key
