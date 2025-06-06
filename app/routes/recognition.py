@@ -34,7 +34,7 @@ def crucial_verify():
     user_response = requests.get(user_service_url)
 
     if user_response.status_code != 200:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), 400
 
     user = user_response.json()
     user_model_preference = user.get("face_model_preference")
@@ -54,7 +54,7 @@ def crucial_verify():
             )
 
             if update_model_response.status_code != 200:
-                return jsonify({"error": "Failed to update face model preference"}), 500
+                return jsonify({"error": "Failed to update face model preference"}), 400
 
         # Set Redis token berlaku 15 menit
         redis_client.setex(f"crucial_token:{user_id_token}", Config.CRUCIAL_ACCESS_TOKEN_EXPIRES, "true")
