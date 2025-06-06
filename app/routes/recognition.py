@@ -60,6 +60,6 @@ def crucial_verify():
         redis_client.setex(f"crucial_token:{user_id_token}", Config.CRUCIAL_ACCESS_TOKEN_EXPIRES, "true")
         return jsonify({"message": "Crucial access granted for 15 minutes"}), 200
 
-    return jsonify({"error": "Face verification failed"}), 400
+    return jsonify({"error": "Face recognition failed", "details": result}), 400
 
     
