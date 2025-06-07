@@ -121,7 +121,7 @@ def check_face_reference(uuid):
                     'has_face_reference': False,
                     'uuid': uuid
                 }
-            }), 404
+            }), 200
 
         # Cek apakah folder ada file gambar (minimal 1 file)
         files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
@@ -145,7 +145,7 @@ def check_face_reference(uuid):
                     'has_face_reference': False,
                     'uuid': uuid
                 }
-            }), 404
+            }), 200
     except Exception as e:
         return jsonify({
             'status': 'error',
