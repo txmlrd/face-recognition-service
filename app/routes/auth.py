@@ -173,7 +173,7 @@ def login():
     user_response = requests.get(user_service_url)
 
     if user_response.status_code != 200:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), 400
 
     user = user_response.json()
     password_user = user.get('password')
@@ -183,10 +183,10 @@ def login():
     uuid = user.get('uuid')
 
     if not bcrypt.check_password_hash(password_user, password):
-        return jsonify({"error": "Invalid credentials"}), 401
+        return jsonify({"error": "Invalid credentials"}), 400
 
     if not is_verified:
-        return jsonify({"error": "Email not verified"}), 401
+        return jsonify({"error": "Email not verified"}), 400
 
     # 2. Ambil permissions dari role-management-service
     role_service_url = f"{Config.ROLE_SERVICE_URL}/internal/role-name-by-role-id?role_id={role_id}"
@@ -242,7 +242,7 @@ def login_face():
     user_response = requests.get(user_service_url)
 
     if user_response.status_code != 200:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), 400
 
     user = user_response.json()
     user_id = user['id']
@@ -252,7 +252,7 @@ def login_face():
     user_model_preference = user.get('face_model_preference')
     
     if not is_verified:
-        return jsonify({"error": "Email not verified"}), 401
+        return jsonify({"error": "Email not verified"}), 400
 
     result, status_code = verify_face_logic(uuid, face, selected_face_model)
 
