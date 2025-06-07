@@ -48,31 +48,120 @@ def refresh():
         return jsonify(access_token=new_access_token), 200
     except Exception as e:
         return jsonify({"error": "Failed to refresh token", "details": str(e)}), 500
-
+    
 @auth_bp.route('/upload-face', methods=['POST'])
 def upload_faces():
     uuid = request.form.get('uuid')
-    images = request.files.getlist('images')  # Ambil semua file dengan key 'images'
+    images = request.files.getlist('images')
 
     if not uuid or len(images) != 3:
-        return jsonify({'message': 'user_id dan 3 image files wajib dikirim'}), 400
+        return jsonify({
+            'status': 'error',
+            'message': 'UUID dan 3 file gambar wajib dikirim',
+            'data': None
+        }), 400
 
     try:
-        save_path = os.path.join("storage", "faces", str(uuid))
-        
-        new_face_references = FaceReference(uuid=uuid, image_path=save_path, created_at=datetime.utcnow())
-        # Simpan ke database
-        db.session.add(new_face_references)
-        db.session.commit()
-        os.makedirs(save_path, exist_ok=True)
+        # Cek apakah sudah ada entry face reference untuk uuid ini
+        existing_ref = FaceReference.query.filter_by(uuid=uuid).first()
 
+        if existing_ref:
+            save_path = existing_ref.image_path
+            # Hapus file lama di folder
+            if os.path.exists(save_path):
+                import shutil
+                shutil.rmtree(save_path)
+            # Buat folder baru (kosong)
+            os.makedirs(save_path, exist_ok=True)
+        else:
+            # Jika belum ada, buat folder dan buat entry DB baru
+            save_path = os.path.join("storage", "faces", str(uuid))
+            os.makedirs(save_path, exist_ok=True)
+            new_face_ref = FaceReference(uuid=uuid, image_path=save_path, created_at=datetime.utcnow())
+            db.session.add(new_face_ref)
+            db.session.commit()
+
+        # Simpan gambar ke folder
+        saved_files = []
         for i, image in enumerate(images, start=1):
             filename = secure_filename(f"img_{i}.jpg")
             image.save(os.path.join(save_path, filename))
+            saved_files.append(filename)
 
-        return jsonify({'message': 'Semua gambar berhasil diupload'}), 200
+        return jsonify({
+            'status': 'success',
+            'message': 'Face reference berhasil diupdate',
+            'data': {
+                'uuid': uuid,
+                'saved_images': saved_files,
+                'path': save_path
+            }
+        }), 200
+
     except Exception as e:
-        return jsonify({'message': 'Upload gagal', 'error': str(e)}), 500
+        return jsonify({
+            'status': 'error',
+            'message': 'Gagal upload face reference',
+            'error': str(e),
+            'data': None
+        }), 500
+
+
+@auth_bp.route('/check-face-reference/<uuid>', methods=['GET'])
+def check_face_reference(uuid):
+    try:
+        folder_path = os.path.join("storage", "faces", str(uuid))
+        
+        # Cek apakah folder ada
+        if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+            return jsonify({
+                'status': 'success',
+                'message': 'Face reference tidak ditemukan, silahkan upload terlebih dahulu',
+                'data': {
+                    'has_face_reference': False,
+                    'uuid': uuid
+                }
+            }), 404
+
+        # Cek apakah folder ada file gambar (minimal 1 file)
+        files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+        has_face = len(files) > 0
+
+        if has_face:
+            return jsonify({
+                'status': 'success',
+                'message': 'Face reference ditemukan',
+                'data': {
+                    'has_face_reference': True,
+                    'uuid': uuid,
+                    'files': files
+                }
+            }), 200
+        else:
+            return jsonify({
+                'status': 'success',
+                'message': 'Face reference tidak ditemukan, silahkan upload terlebih dahulu',
+                'data': {
+                    'has_face_reference': False,
+                    'uuid': uuid
+                }
+            }), 404
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': 'Gagal mengecek face reference di folder',
+            'error': str(e),
+            'data': None
+        }), 500
+
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': 'Gagal mengecek face reference',
+            'error': str(e),
+            'data': None
+        }), 500
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
