@@ -31,7 +31,7 @@ def get_log_password():
                 "status": "failed",
                 "message": "No password reset logs found with the specified filter",
                 "data": None
-            }), 400
+            }), 200
 
         now = datetime.utcnow()
         log_list = [{
