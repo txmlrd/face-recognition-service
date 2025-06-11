@@ -1,6 +1,9 @@
+from dotenv import load_dotenv
 import os
-from flask import Blueprint, request, jsonify
+load_dotenv() 
+from flask import Blueprint, request, jsonify, render_template
 from werkzeug.utils import secure_filename
+from app.functions.get_user_by_email import get_user_by_email
 from app.models.face_reference import FaceReference
 from datetime import datetime
 from app.extensions import db, create_access_token, get_jwt_identity, jwt_required, bcrypt, create_refresh_token
@@ -8,6 +11,11 @@ from app.function.face_verification_logic import verify_face_logic
 import requests
 from app.config import Config
 from datetime import timedelta
+from app.models.password_reset import PasswordReset
+from app.functions.get_user_requests_password import get_user_request_password
+from app.utils.mailer import send_email
+from app.utils.serializer import get_serializer
+
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -298,5 +306,85 @@ def login_face():
 
     return jsonify({"error": "Face recognition failed", "details": result}), status_code
 
+@auth_bp.route('/reset-password/request', methods=['POST'])
+def forgot_password():
+    email = request.get_json().get('email')
+    user = get_user_by_email(email)
+
+    if user is None:
+        return jsonify({"msg": "Email not found"}), 404
+
+    check_token, status = get_user_request_password(user['uuid'])
+    
+    if status == 200:
+        minutes_left = int((check_token.expires_at - datetime.utcnow()).total_seconds()) // 60
+        reset_url = f"{Config.API_GATEWAY_URL}/user/reset-password/confirm/{check_token.token}"
+        send_email(
+            'Reset Your Password',
+            email,
+            body=f'Link masih berlaku sekitar {minutes_left} menit.\nKlik link berikut untuk reset password: {reset_url}'
+        )
+        return jsonify({"msg": "Reset password link resent, please check your email!"}), 200
+
+    # Token expired atau tidak ditemukan → buat baru
+    token = get_serializer().dumps(email, salt='password-reset')
+    reset_url = f"{Config.API_GATEWAY_URL}/user/reset-password/confirm/{token}"
+    # reset_url = url_for('auth.reset_password', token=token, _external=True)
+    send_email('Reset Your Password', email, body=f'Klik link berikut untuk reset password: {reset_url}')
+
+    now = datetime.utcnow()
+    save_token = PasswordReset(
+        uuid=user['uuid'],
+        token=token,
+        created_at=now,
+        expires_at=now + timedelta(minutes=15),
+        is_reset=False
+    )
+    db.session.add(save_token)
+    db.session.commit()
+
+    return jsonify({"msg": "Reset password request success, please check your email!"}), 200
+
+
+@auth_bp.route('/reset-password/confirm/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        email = get_serializer().loads(token, salt='password-reset', max_age=900)
+    except Exception:
+        return render_template("reset_password.html", error="Invalid or expired token")
+
+    user = get_user_by_email(email)
+    user_token = PasswordReset.query.filter_by(token=token).first()
+    if not user:
+        return render_template("reset_password.html", error="User not found")
+    
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        if not new_password:
+            return render_template("reset_password.html", error="Password is required")
+
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+        # Kirim ke User Service
+        headers = {
+        "Authorization": f"Bearer {os.getenv('RESET_PASSWORD_SECRET')}"
+        }
+        user_service_url = f"{Config.USER_SERVICE_URL}/internal/users/{email}/password"
+        response = requests.patch(user_service_url, json={"new_password": hashed_password}, headers=headers)
+
+        if response.status_code != 200:
+            return render_template("reset_password.html", error="Failed to update password")
+
+        user_token.is_reset = True
+        db.session.commit()
+        return render_template("reset_password.html", success=True)
+
+
+    if user_token.is_reset == True:
+        return render_template("reset_password.html", already_used=True)
+    
+    if user_token.expires_at < datetime.utcnow():
+        return render_template("reset_password.html", expired=True)
+    return render_template("reset_password.html")
 
 

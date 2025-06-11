@@ -1,6 +1,7 @@
 from PIL import Image
 from io import BytesIO
 import os
+from flask_mail import Mail
 from deepface import DeepFace
 from flask import Flask, request, jsonify, Blueprint
 import base64
@@ -14,6 +15,7 @@ from app.config import Config
 redis_client = redis.StrictRedis.from_url(Config.REDIS_URL)
 
 DeepFace = DeepFace
+mail = Mail()
 jwt = JWTManager()
 bcrypt = Bcrypt()
 db = SQLAlchemy()

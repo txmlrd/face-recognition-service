@@ -1,11 +1,64 @@
 from app.extensions import os, request, jsonify, Blueprint, DeepFace, jwt_required, get_jwt_identity, redis_client
 from app.models.face_reference import FaceReference
+from app.models.password_reset import PasswordReset
 from app.function.face_verification_logic import verify_face_logic
 from app.config import Config
 import requests
 
-
 admin_auth_bp = Blueprint('admin_auth_bp', __name__)
+
+from datetime import datetime
+
+@admin_auth_bp.route('/log-password', methods=['GET'])
+@jwt_required()
+def get_log_password():
+    uuid = request.args.get('uuid')
+    is_reset_str = request.args.get('is_reset')
+
+    try:
+        query = PasswordReset.query
+
+        if uuid:
+            query = query.filter_by(uuid=uuid)
+
+        if is_reset_str is not None:
+            is_reset = is_reset_str.lower() == 'true'
+            query = query.filter_by(is_reset=is_reset)
+
+        logs = query.all()
+        if not logs:
+            return jsonify({
+                "status": "failed",
+                "message": "No password reset logs found with the specified filter",
+                "data": None
+            }), 400
+
+        now = datetime.utcnow()
+        log_list = [{
+            "id": log.id,
+            "uuid": log.uuid,
+            "token": log.token,
+            "is_reset": log.is_reset,
+            "created_at": log.created_at.isoformat(),
+            "expires_at": log.expires_at.isoformat(),
+            "is_expired": log.expires_at < now
+        } for log in logs]
+
+        return jsonify({
+            "status": "success",
+            "message": "Password reset logs retrieved successfully",
+            "data": log_list
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "failed",
+            "message": "An error occurred while retrieving password reset log(s)",
+            "data": str(e)
+        }), 500
+
+
+
 @admin_auth_bp.route('/inject-crucial-token', methods=['POST'])
 @jwt_required()
 def inject_crucial_token():
@@ -19,9 +72,7 @@ def inject_crucial_token():
             "data": None
         }), 400
 
-    # Cek apakah user_id valid dengan request ke user service
     try:
-        # Ganti URL ini sesuai alamat user-service kamu
         user_service_url = f"{Config.USER_SERVICE_URL}/admin/get-user?user_id={user_id}"
         headers = {"Authorization": request.headers.get("Authorization")}
 
@@ -41,7 +92,6 @@ def inject_crucial_token():
             "data": str(e)
         }), 502
 
-    # Jika user valid, inject ke Redis
     try:
         key = f"crucial_token:{user_id}"
         redis_client.setex(key, Config.CRUCIAL_ACCESS_TOKEN_EXPIRES, "true")
