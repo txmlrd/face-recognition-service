@@ -26,14 +26,8 @@ def get_log_password():
             query = query.filter_by(is_reset=is_reset)
 
         logs = query.all()
-        if not logs:
-            return jsonify({
-                "status": "failed",
-                "message": "No password reset logs found with the specified filter",
-                "data": None
-            }), 200
-
         now = datetime.utcnow()
+
         log_list = [{
             "id": log.id,
             "uuid": log.uuid,
@@ -46,7 +40,7 @@ def get_log_password():
 
         return jsonify({
             "status": "success",
-            "message": "Password reset logs retrieved successfully",
+            "message": "Password reset logs retrieved successfully" if log_list else "No password reset logs found with the specified filter",
             "data": log_list
         }), 200
 
