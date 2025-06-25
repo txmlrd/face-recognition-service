@@ -1,6 +1,6 @@
 from app.extensions import os, request, jsonify, Blueprint, DeepFace, jwt_required, get_jwt_identity, redis_client
 from app.models.face_reference import FaceReference
-from app.function.face_verification_logic import verify_face_logic
+from app.functions.face_verification_logic import verify_face_logic
 from app.config import Config
 import requests
 

@@ -30,4 +30,4 @@ class Config:
     API_GATEWAY_URL = os.environ.get('API_GATEWAY_URL')
     ROLE_SERVICE_URL = os.environ.get('ROLE_SERVICE_URL')
     
-    CRUCIAL_ACCESS_TOKEN_EXPIRES = os.environ.get('CRUCIAL_ACCESS_TOKEN_EXPIRES')  # 15 minutes
+    CRUCIAL_ACCESS_TOKEN_EXPIRES = os.environ.get('CRUCIAL_ACCESS_TOKEN_EXPIRES') 

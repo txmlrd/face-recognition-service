@@ -7,7 +7,7 @@ from app.functions.get_user_by_email import get_user_by_email
 from app.models.face_reference import FaceReference
 from datetime import datetime
 from app.extensions import db, create_access_token, get_jwt_identity, jwt_required, bcrypt, create_refresh_token
-from app.function.face_verification_logic import verify_face_logic
+from app.functions.face_verification_logic import verify_face_logic
 import requests
 from app.config import Config
 from datetime import timedelta
@@ -178,9 +178,15 @@ def login():
 
     # 1. Ambil user dari user-service
     user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-email?email={email}"
-    user_response = requests.get(user_service_url)
+    try:
+        user_response = requests.get(user_service_url)
+        user_response.raise_for_status()  
+    except requests.RequestException as e:
+        print(f"Error contacting user service: {e}") 
+        return jsonify({"error": "User service is not available"}), 503
 
-    if user_response.status_code != 200:
+    # Jika user tidak ditemukan
+    if user_response.status_code == 404:
         return jsonify({"error": "User not found"}), 400
 
     user = user_response.json()
@@ -247,9 +253,15 @@ def login_face():
 
     # Ambil user berdasarkan email
     user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-email?email={email}"
-    user_response = requests.get(user_service_url)
+    try:
+        user_response = requests.get(user_service_url)
+        user_response.raise_for_status()  
+    except requests.RequestException as e:
+        print(f"Error contacting user service: {e}") 
+        return jsonify({"error": "User service is not available"}), 503
 
-    if user_response.status_code != 200:
+    # Jika user tidak ditemukan
+    if user_response.status_code == 404:
         return jsonify({"error": "User not found"}), 400
 
     user = user_response.json()

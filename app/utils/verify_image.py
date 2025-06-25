@@ -8,6 +8,10 @@ class FaceVerifier:
                 img1_path=img1,
                 img2_path=img2,
                 model_name='Facenet512',
+                align=True,
+                detector_backend='retinaface',
+                distance_metric='cosine',
+                threshold=0.25
             )
             return FaceVerifier._format_result(result)
         except Exception as e:
@@ -22,7 +26,8 @@ class FaceVerifier:
                 model_name='Facenet512',
                 align=True,
                 detector_backend='retinaface',
-                distance_metric='euclidean_l2'
+                distance_metric='cosine',
+                threshold=0.25
             )
             return FaceVerifier._format_result(result)
         except Exception as e:
