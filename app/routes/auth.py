@@ -61,6 +61,12 @@ def refresh():
 def upload_faces():
     uuid = request.form.get('uuid')
     images = request.files.getlist('images')
+    
+    user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-uuid?uuid={uuid}"
+    user_response = requests.get(user_service_url)
+
+    if user_response.status_code != 200:
+            return jsonify({"error": "UUID is not valid"}), 404
 
     if not uuid or len(images) != 3:
         return jsonify({
