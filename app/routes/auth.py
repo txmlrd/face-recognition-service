@@ -62,11 +62,11 @@ def upload_faces():
     uuid = request.form.get('uuid')
     images = request.files.getlist('images')
     
-    user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-uuid?uuid={uuid}"
-    user_response = requests.get(user_service_url)
+    # user_service_url = f"{Config.USER_SERVICE_URL}/internal/user-by-uuid?uuid={uuid}"
+    # user_response = requests.get(user_service_url)
 
-    if user_response.status_code != 200:
-            return jsonify({"error": "UUID is not valid"}), 404
+    # if user_response.status_code != 200:
+    #         return jsonify({"error": "UUID is not valid"}), 404
 
     if not uuid or len(images) != 3:
         return jsonify({
@@ -189,7 +189,7 @@ def login():
         user_response.raise_for_status()  
     except requests.RequestException as e:
         print(f"Error contacting user service: {e}") 
-        return jsonify({"error": "User service is not available"}), 503
+        return jsonify({"error": "User not found"}), 503
 
     # Jika user tidak ditemukan
     if user_response.status_code == 404:
@@ -264,7 +264,7 @@ def login_face():
         user_response.raise_for_status()  
     except requests.RequestException as e:
         print(f"Error contacting user service: {e}") 
-        return jsonify({"error": "User service is not available"}), 503
+        return jsonify({"error": "User not found"}), 503
 
     # Jika user tidak ditemukan
     if user_response.status_code == 404:
